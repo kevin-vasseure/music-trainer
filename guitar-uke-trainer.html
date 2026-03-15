@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guitar & Uke Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --accent: #00ff9f;
+    --accent2: #ff3c6e;
+    --accent3: #7c6fff;
+    --text: #e0e0ff;
+    --muted: #4a4a6a;
+    --glow:  0 0 20px rgba(0,255,159,0.4);
+    --glow2: 0 0 20px rgba(255,60,110,0.4);
+    --glow3: 0 0 20px rgba(124,111,255,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(124,111,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 30% at 80% 80%, rgba(0,255,159,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: var(--glow);
+    line-height: 1;
+  }
+
+  .tagline {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* SECTION */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent3), transparent);
+    opacity: 0.5;
+  }
+
+  .section-label {
+    font-size: 0.6rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* INSTRUMENT SELECTOR */
+  .instr-grid { display: flex; gap: 10px; }
+
+  .instr-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 3px;
+    padding: 10px 30px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+  }
+
+  .instr-btn:hover { border-color: var(--accent3); color: var(--text); }
+  .instr-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,255,159,0.06);
+    box-shadow: var(--glow);
+  }
+
+  /* SCALE SELECTOR */
+  .scale-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .scale-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: 3px;
+    text-align: left;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+
+  .scale-btn:hover { border-color: var(--accent3); color: var(--text); }
+  .scale-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,255,159,0.06);
+    box-shadow: var(--glow);
+  }
+
+  .scale-btn .scale-mood {
+    display: block;
+    font-size: 0.55rem;
+    color: var(--muted);
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+  }
+
+  .scale-btn.active .scale-mood { color: rgba(0,255,159,0.6); }
+
+  /* ROOT NOTE */
+  .root-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .root-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    padding: 7px 14px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+  }
+
+  .root-btn:hover { border-color: var(--accent3); color: var(--text); }
+  .root-btn.active {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(255,60,110,0.07);
+    box-shadow: var(--glow2);
+  }
+
+  /* NOTES DISPLAY */
+  .notes-display {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 36px;
+  }
+
+  .note-pill {
+    background: rgba(124,111,255,0.15);
+    border: 1px solid rgba(124,111,255,0.4);
+    color: var(--accent3);
+    font-size: 0.7rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .note-pill.root {
+    background: rgba(255,60,110,0.15);
+    border-color: rgba(255,60,110,0.5);
+    color: var(--accent2);
+  }
+
+  /* FRETBOARD */
+  .fretboard-wrap {
+    overflow-x: auto;
+    padding: 4px 0 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .fretboard { position: relative; }
+
+  /* CONTROLS */
+  .controls-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .ctrl-label {
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    background: var(--border);
+    height: 3px;
+    border-radius: 2px;
+    width: 100px;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0,255,159,0.5);
+  }
+
+  .val-display {
+    font-size: 0.65rem;
+    color: var(--accent);
+    min-width: 30px;
+  }
+
+  /* BACKING TRACK */
+  .backing-grid { display: grid; gap: 8px; }
+
+  .backing-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    padding: 11px 14px;
+    cursor: pointer;
+    border-radius: 3px;
+    text-align: left;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .backing-btn:hover { border-color: var(--accent3); color: var(--text); }
+
+  .backing-genre {
+    font-size: 0.5rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* TIPS */
+  .tip-box {
+    background: rgba(124,111,255,0.07);
+    border: 1px solid rgba(124,111,255,0.2);
+    border-left: 3px solid var(--accent3);
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-size: 0.65rem;
+    line-height: 1.8;
+    color: rgba(224,224,255,0.7);
+    letter-spacing: 0.3px;
+  }
+
+  .tip-title {
+    color: var(--accent3);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* VISUALIZER */
+  .visualizer {
+    height: 60px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .viz-bar {
+    position: absolute;
+    bottom: 0;
+    width: 3px;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.05s;
+    opacity: 0.7;
+  }
+
+  /* ROW2 */
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>GUITAR<br>&amp; UKE<br>TRAINER</h1>
+    <p class="tagline">visualise tes gammes<br>sur le manche</p>
+  </header>
+
+  <!-- 00 INSTRUMENT -->
+  <div class="section">
+    <div class="section-label">00 — instrument</div>
+    <div class="instr-grid" id="instrGrid"></div>
+  </div>
+
+  <!-- 01 SCALE + ROOT -->
+  <div class="section">
+    <div class="section-label">01 — choisir une gamme</div>
+    <div style="margin-bottom:14px">
+      <div class="section-label" style="margin-bottom:8px">tonique</div>
+      <div class="root-grid" id="rootGrid"></div>
+    </div>
+    <div class="scale-grid" id="scaleGrid"></div>
+  </div>
+
+  <!-- 02 NOTES -->
+  <div class="section">
+    <div class="section-label">02 — notes de la gamme <span style="color:var(--accent2)">(rouge = tonique)</span></div>
+    <div class="notes-display" id="notesDisplay"></div>
+  </div>
+
+  <!-- 03 FRETBOARD -->
+  <div class="section">
+    <div class="section-label">03 — manche — clique sur les points pour jouer</div>
+    <div class="fretboard-wrap">
+      <div class="fretboard" id="fretboard"></div>
+    </div>
+    <div class="controls-row">
+      <span class="ctrl-label">volume</span>
+      <input type="range" id="volumeSlider" min="0" max="100" value="60">
+      <span class="val-display" id="volDisplay">60</span>
+      <span class="ctrl-label" style="margin-left:12px">reverb</span>
+      <input type="range" id="reverbSlider" min="0" max="100" value="20">
+      <span class="val-display" id="revDisplay">20</span>
+    </div>
+  </div>
+
+  <!-- 04 + 05 -->
+  <div class="row2">
+    <div class="section">
+      <div class="section-label">04 — backing tracks (YouTube)</div>
+      <div class="backing-grid" id="backingGrid"></div>
+    </div>
+    <div class="section">
+      <div class="section-label">05 — conseil du moment</div>
+      <div id="tipBox" class="tip-box"></div>
+    </div>
+  </div>
+
+  <!-- 06 VISUALIZER -->
+  <div class="section">
+    <div class="section-label">06 — visualiseur</div>
+    <div class="visualizer" id="visualizer"></div>
+  </div>
+</div>
+
+<script>
+// ── AUDIO ─────────────────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx = null, masterGain, reverbGain, dryGain, convolver;
+let volumeLevel = 0.6, reverbLevel = 0.2;
+const activeNotes = {};
+
+function initAudio() {
+  if (ctx) return;
+  ctx = new AudioCtx();
+  masterGain = ctx.createGain();
+  masterGain.gain.value = volumeLevel;
+  convolver = ctx.createConvolver();
+  convolver.buffer = makeImpulse(2, 3);
+  reverbGain = ctx.createGain(); reverbGain.gain.value = reverbLevel;
+  dryGain   = ctx.createGain(); dryGain.gain.value = 1 - reverbLevel * 0.5;
+  masterGain.connect(dryGain);
+  masterGain.connect(convolver);
+  convolver.connect(reverbGain);
+  dryGain.connect(ctx.destination);
+  reverbGain.connect(ctx.destination);
+}
+
+function makeImpulse(dur, decay) {
+  const sr  = ctx.sampleRate;
+  const buf = ctx.createBuffer(2, sr * dur, sr);
+  for (let c = 0; c < 2; c++) {
+    const ch = buf.getChannelData(c);
+    for (let i = 0; i < ch.length; i++)
+      ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / ch.length, decay);
+  }
+  return buf;
+}
+
+function pluck(freq, id) {
+  initAudio();
+  const t = ctx.currentTime;
+  if (activeNotes[id]) { try { activeNotes[id].stop(t); } catch(e){} }
+
+  const osc1   = ctx.createOscillator();
+  const osc2   = ctx.createOscillator();
+  const filter = ctx.createBiquadFilter();
+  const gain   = ctx.createGain();
+
+  osc1.type = 'sawtooth'; osc1.frequency.value = freq;
+  osc2.type = 'triangle'; osc2.frequency.value = freq; osc2.detune.value = 4;
+
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(Math.min(freq * 8, 9000), t);
+  filter.frequency.exponentialRampToValueAtTime(Math.max(freq * 1.8, 200), t + 0.15);
+  filter.Q.value = 0.8;
+
+  gain.gain.setValueAtTime(0.45, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 2.2);
+
+  osc1.connect(filter); osc2.connect(filter);
+  filter.connect(gain); gain.connect(masterGain);
+
+  osc1.start(t); osc2.start(t);
+  osc1.stop(t + 2.5); osc2.stop(t + 2.5);
+
+  activeNotes[id] = osc1;
+  setTimeout(() => delete activeNotes[id], 2600);
+  vizTrigger(freq);
+}
+
+// ── THEORY ────────────────────────────────────────────────────
+const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+const SCALES = {
+  'Pentatonique mineure':      { intervals: [0,3,5,7,10],        mood: 'blues · rock · no wrong notes' },
+  'Pentatonique majeure':      { intervals: [0,2,4,7,9],         mood: 'joyeux · pop · country' },
+  'Ionien (majeur)':           { intervals: [0,2,4,5,7,9,11],    mood: 'lumineux · classique' },
+  'Dorien':                    { intervals: [0,2,3,5,7,9,10],    mood: 'jazzy · soul · funk' },
+  'Phrygien':                  { intervals: [0,1,3,5,7,8,10],    mood: 'sombre · espagnol · metal' },
+  'Lydien':                    { intervals: [0,2,4,6,7,9,11],    mood: 'onirique · film · flottant' },
+  'Mixolydien':                { intervals: [0,2,4,5,7,9,10],    mood: 'rock · blues · détendu' },
+  'Éolien (naturel mineur)':   { intervals: [0,2,3,5,7,8,10],   mood: 'mélancolique · classique' },
+  'Blues':                     { intervals: [0,3,5,6,7,10],      mood: 'blues · expressif · feeling' },
+};
+
+const INSTRUMENTS = {
+  guitar: {
+    label: 'GUITAR',
+    strings: [
+      { label: 'e', midi: 64 },
+      { label: 'B', midi: 59 },
+      { label: 'G', midi: 55 },
+      { label: 'D', midi: 50 },
+      { label: 'A', midi: 45 },
+      { label: 'E', midi: 40 },
+    ],
+    markers: [3, 5, 7, 9, 12],
+    double:  [12],
+    backing: [
+      { name: 'Am Pentatonique', genre: 'Rock / Blues', url: 'https://www.youtube.com/results?search_query=A+minor+pentatonic+guitar+backing+track' },
+      { name: 'Em Mixolydien',   genre: 'Rock',         url: 'https://www.youtube.com/results?search_query=E+mixolydian+guitar+backing+track' },
+      { name: 'Dm Dorien',       genre: 'Jazz / Funk',  url: 'https://www.youtube.com/results?search_query=D+dorian+guitar+backing+track' },
+      { name: 'Gm Blues',        genre: 'Blues',        url: 'https://www.youtube.com/results?search_query=G+minor+blues+guitar+backing+track' },
+    ],
+    tips: [
+      { title: 'Position de la main',    text: 'Garde le pouce derrière le manche, dans le dos. Ça libère les doigts et évite les crampes. Un pouce qui déborde = mauvaise technique.' },
+      { title: 'Un doigt par case',      text: 'Entraîne-toi à assigner un doigt par case : index=1, majeur=2, annulaire=3, auriculaire=4. Ça crée de l\'automatisme sur le manche.' },
+      { title: 'La pentatonique d\'abord', text: 'C\'est la gamme la plus facile à mémoriser. 5 notes, des patterns en boîte. Maîtrise la position 1 en Am avant tout le reste.' },
+      { title: 'Les slides',             text: 'Un slide d\'une note à l\'autre (grave → aigu) donne du caractère. Fais glisser ton doigt le long de la corde sans la lâcher.' },
+      { title: 'Les bends',              text: 'Tire la corde vers le haut pour monter d\'un demi-ton ou un ton. C\'est la technique la plus expressive — le cri de la guitare.' },
+      { title: 'Pratique lentement',     text: 'Vitesse = récompense de la lenteur. Joue à 50% du tempo, parfaitement propre et en rythme. La vitesse vient naturellement ensuite.' },
+    ],
+  },
+  ukulele: {
+    label: 'UKULELE',
+    strings: [
+      { label: 'A', midi: 69 },
+      { label: 'E', midi: 64 },
+      { label: 'C', midi: 60 },
+      { label: 'G', midi: 67 },
+    ],
+    markers: [3, 5, 7, 10, 12],
+    double:  [12],
+    backing: [
+      { name: 'C Majeur',       genre: 'Pop / Folk', url: 'https://www.youtube.com/results?search_query=C+major+ukulele+backing+track' },
+      { name: 'Am Pentatonique',genre: 'Pop / Folk', url: 'https://www.youtube.com/results?search_query=A+minor+ukulele+backing+track' },
+      { name: 'G Majeur',       genre: 'Reggae',     url: 'https://www.youtube.com/results?search_query=G+major+ukulele+backing+track+reggae' },
+      { name: 'F Majeur',       genre: 'Hawaïen',    url: 'https://www.youtube.com/results?search_query=F+major+ukulele+backing+track+hawaiian' },
+    ],
+    tips: [
+      { title: 'Tuning réentrant',     text: 'Le ukulele est accordé GCEA avec le Sol (G4) plus aigu que le Do. Cet accordage réentrant crée des patterns de mélodie uniques.' },
+      { title: 'Le strumming',         text: 'Pattern de base : Down Down Up Up Down. Commence au ralenti, poignet souple. C\'est le poignet qui strumme, pas le bras.' },
+      { title: 'Cordes nylon',         text: 'Les cordes en nylon demandent plus d\'appui que l\'acier. Appuie bien juste derrière la case, pas dessus, pour éviter les faux-tons.' },
+      { title: 'La corde de sol',      text: 'La G string (grave) offre des inversions de mélodie impossibles sur guitare. Explore les sauts inattendus entre grave et aigu.' },
+      { title: 'Barré simplifié',      text: 'Sur uke, le barré est beaucoup plus facile : 4 cordes, petit manche. Travaille-le dès le début, ça débloque tous les accords mobiles.' },
+      { title: 'Transposition guitare',text: 'Un accord de La (A) sur guitare correspond à Do (C) sur ukulele — comme un capodastre virtuel à la 5e case. Pratique pour jammer.' },
+    ],
+  },
+};
+
+let currentInstrument = 'guitar';
+let currentRoot  = 'A';
+let currentScale = 'Pentatonique mineure';
+let tipIndex = 0;
+
+function getScaleNotes(root, scale) {
+  const ri = NOTES.indexOf(root);
+  return SCALES[scale].intervals.map(i => NOTES[(ri + i) % 12]);
+}
+
+function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderInstruments() {
+  const el = document.getElementById('instrGrid');
+  el.innerHTML = '';
+  Object.entries(INSTRUMENTS).forEach(([key, instr]) => {
+    const b = document.createElement('button');
+    b.className = 'instr-btn' + (key === currentInstrument ? ' active' : '');
+    b.textContent = instr.label;
+    b.onclick = () => { currentInstrument = key; refresh(); };
+    el.appendChild(b);
+  });
+}
+
+function renderRoots() {
+  const el = document.getElementById('rootGrid');
+  el.innerHTML = '';
+  NOTES.forEach(r => {
+    const b = document.createElement('button');
+    b.className = 'root-btn' + (r === currentRoot ? ' active' : '');
+    b.textContent = r;
+    b.onclick = () => { currentRoot = r; refresh(); };
+    el.appendChild(b);
+  });
+}
+
+function renderScales() {
+  const el = document.getElementById('scaleGrid');
+  el.innerHTML = '';
+  Object.entries(SCALES).forEach(([name, data]) => {
+    const b = document.createElement('button');
+    b.className = 'scale-btn' + (name === currentScale ? ' active' : '');
+    b.innerHTML = `${name}<span class="scale-mood">${data.mood}</span>`;
+    b.onclick = () => { currentScale = name; refresh(); };
+    el.appendChild(b);
+  });
+}
+
+function renderNotes() {
+  const scaleNotes = getScaleNotes(currentRoot, currentScale);
+  const el = document.getElementById('notesDisplay');
+  el.innerHTML = '';
+  scaleNotes.forEach((n, i) => {
+    const pill = document.createElement('div');
+    pill.className = 'note-pill' + (i === 0 ? ' root' : '');
+    pill.textContent = n;
+    el.appendChild(pill);
+  });
+}
+
+// ── FRETBOARD ────────────────────────────────────────────────
+function renderFretboard() {
+  const instr      = INSTRUMENTS[currentInstrument];
+  const strings    = instr.strings;
+  const scaleNotes = getScaleNotes(currentRoot, currentScale);
+
+  // Layout constants
+  const NUM_FRETS = 12;
+  const FRET_W    = 56;
+  const STR_H     = 38;
+  const LABEL_W   = 34;
+  const OPEN_W    = 40;   // width of open-string column
+  const NUT_W     = 7;
+  const HEADER_H  = 26;
+  const FOOTER_H  = 22;
+
+  const totalW = LABEL_W + OPEN_W + NUT_W + NUM_FRETS * FRET_W;
+  const totalH = HEADER_H + strings.length * STR_H + FOOTER_H;
+
+  const el = document.getElementById('fretboard');
+  el.innerHTML = '';
+  el.style.width  = totalW + 'px';
+  el.style.height = totalH + 'px';
+
+  // ── helpers ──
+  const div = (styles) => {
+    const d = document.createElement('div');
+    d.style.position = 'absolute';
+    Object.assign(d.style, styles);
+    return d;
+  };
+
+  // Fret numbers (1–12)
+  for (let f = 1; f <= NUM_FRETS; f++) {
+    const x = LABEL_W + OPEN_W + NUT_W + (f - 0.5) * FRET_W;
+    const isMarker = instr.markers.includes(f);
+    const num = div({
+      left: (x - 15) + 'px', top: '2px',
+      width: '30px', textAlign: 'center',
+      fontSize: '0.5rem',
+      fontFamily: "'Space Mono', monospace",
+      color: isMarker ? 'var(--accent3)' : 'var(--muted)',
+      letterSpacing: '0.5px',
+    });
+    num.textContent = f;
+    el.appendChild(num);
+  }
+
+  // Nut
+  el.appendChild(div({
+    left: (LABEL_W + OPEN_W) + 'px',
+    top: HEADER_H + 'px',
+    width: NUT_W + 'px',
+    height: (strings.length * STR_H) + 'px',
+    background: 'rgba(224,224,255,0.55)',
+    borderRadius: '1px',
+  }));
+
+  // Fret lines
+  for (let f = 1; f <= NUM_FRETS; f++) {
+    const x = LABEL_W + OPEN_W + NUT_W + f * FRET_W;
+    el.appendChild(div({
+      left: x + 'px',
+      top: HEADER_H + 'px',
+      width: '2px',
+      height: (strings.length * STR_H) + 'px',
+      background: 'var(--border)',
+    }));
+  }
+
+  // Position markers below strings
+  const markerY = HEADER_H + strings.length * STR_H + 6;
+  instr.markers.forEach(f => {
+    const cx = LABEL_W + OPEN_W + NUT_W + (f - 0.5) * FRET_W;
+    const offsets = instr.double.includes(f) ? [-8, 8] : [0];
+    offsets.forEach(off => {
+      el.appendChild(div({
+        left: (cx + off - 3) + 'px',
+        top: markerY + 'px',
+        width: '6px', height: '6px',
+        borderRadius: '50%',
+        background: 'var(--accent3)',
+        opacity: '0.45',
+      }));
+    });
+  });
+
+  // "OPEN" label above open-string column
+  const openLabel = div({
+    left: LABEL_W + 'px',
+    top: '2px',
+    width: OPEN_W + 'px',
+    textAlign: 'center',
+    fontSize: '0.45rem',
+    fontFamily: "'Space Mono', monospace",
+    color: 'var(--muted)',
+    letterSpacing: '1px',
+    textTransform: 'uppercase',
+  });
+  openLabel.textContent = 'open';
+  el.appendChild(openLabel);
+
+  // Strings
+  strings.forEach((str, si) => {
+    const y = HEADER_H + si * STR_H + STR_H / 2;
+    const thickness = Math.max(1, (strings.length - si) * 0.55);
+
+    // String label
+    const lbl = div({
+      left: '0px', top: (y - 9) + 'px',
+      width: LABEL_W + 'px', height: '18px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '0.65rem',
+      fontFamily: "'Space Mono', monospace",
+      color: 'rgba(74,74,106,0.8)',
+    });
+    lbl.textContent = str.label;
+    el.appendChild(lbl);
+
+    // String line (from open area through all frets)
+    el.appendChild(div({
+      left: LABEL_W + 'px',
+      top: (y - Math.ceil(thickness / 2)) + 'px',
+      right: '0px',
+      height: Math.ceil(thickness) + 'px',
+      background: `rgba(180,180,255,${0.12 + (strings.length - si) * 0.035})`,
+    }));
+
+    // Open string note dot
+    placeNoteDot(el, str.midi, LABEL_W + OPEN_W / 2, y, scaleNotes, `open-${si}`);
+
+    // Fretted notes
+    for (let f = 1; f <= NUM_FRETS; f++) {
+      const midi = str.midi + f;
+      const x = LABEL_W + OPEN_W + NUT_W + (f - 0.5) * FRET_W;
+      placeNoteDot(el, midi, x, y, scaleNotes, `s${si}f${f}`);
+    }
+  });
+}
+
+function placeNoteDot(parent, midi, cx, cy, scaleNotes, id) {
+  const noteName = NOTES[midi % 12];
+  const inScale  = scaleNotes.includes(noteName);
+  const isRoot   = noteName === currentRoot;
+
+  if (!inScale && !isRoot) return; // only render scale notes
+
+  const SIZE = 26;
+  const dot = document.createElement('div');
+  dot.style.cssText = `
+    position: absolute;
+    left: ${cx - SIZE / 2}px;
+    top: ${cy - SIZE / 2}px;
+    width: ${SIZE}px;
+    height: ${SIZE}px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.45rem;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: -0.5px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    z-index: 2;
+    user-select: none;
+  `;
+
+  if (isRoot) {
+    dot.style.background  = 'rgba(255,60,110,0.22)';
+    dot.style.border      = '1.5px solid rgba(255,60,110,0.85)';
+    dot.style.color       = '#ff3c6e';
+    dot.style.boxShadow   = '0 0 10px rgba(255,60,110,0.4)';
+  } else {
+    dot.style.background  = 'rgba(124,111,255,0.18)';
+    dot.style.border      = '1.5px solid rgba(124,111,255,0.75)';
+    dot.style.color       = '#a89fff';
+    dot.style.boxShadow   = '0 0 8px rgba(124,111,255,0.25)';
+  }
+
+  dot.textContent = noteName;
+
+  const freq = midiToFreq(midi);
+
+  dot.addEventListener('mouseenter', () => {
+    dot.style.transform  = 'scale(1.18)';
+    dot.style.boxShadow  = isRoot
+      ? '0 0 20px rgba(255,60,110,0.75)'
+      : '0 0 18px rgba(124,111,255,0.7)';
+  });
+  dot.addEventListener('mouseleave', () => {
+    dot.style.transform  = 'scale(1)';
+    dot.style.boxShadow  = isRoot
+      ? '0 0 10px rgba(255,60,110,0.4)'
+      : '0 0 8px rgba(124,111,255,0.25)';
+  });
+  dot.addEventListener('click', () => {
+    pluck(freq, id);
+    // flash
+    dot.style.background = isRoot ? 'rgba(255,60,110,0.55)' : 'rgba(0,255,159,0.35)';
+    dot.style.borderColor = isRoot ? '#ff3c6e' : 'var(--accent)';
+    setTimeout(() => {
+      dot.style.background  = isRoot ? 'rgba(255,60,110,0.22)' : 'rgba(124,111,255,0.18)';
+      dot.style.borderColor = isRoot ? 'rgba(255,60,110,0.85)' : 'rgba(124,111,255,0.75)';
+    }, 300);
+  });
+
+  parent.appendChild(dot);
+}
+
+function renderBacking() {
+  const instr = INSTRUMENTS[currentInstrument];
+  const el = document.getElementById('backingGrid');
+  el.innerHTML = '';
+  instr.backing.forEach(({ name, genre, url }) => {
+    const b = document.createElement('button');
+    b.className = 'backing-btn';
+    b.innerHTML = `<span>${name}</span><span class="backing-genre">${genre}</span>`;
+    b.onclick = () => window.open(url, '_blank');
+    el.appendChild(b);
+  });
+}
+
+function renderTip() {
+  const tips = INSTRUMENTS[currentInstrument].tips;
+  const tip  = tips[tipIndex % tips.length];
+  document.getElementById('tipBox').innerHTML =
+    `<div class="tip-title">${tip.title}</div>${tip.text}`;
+}
+
+function refresh() {
+  renderInstruments();
+  renderRoots();
+  renderScales();
+  renderNotes();
+  renderFretboard();
+  renderBacking();
+  tipIndex = Math.floor(Math.random() * INSTRUMENTS[currentInstrument].tips.length);
+  renderTip();
+}
+
+// ── VISUALIZER ────────────────────────────────────────────────
+const vizEl    = document.getElementById('visualizer');
+const BAR_COUNT = 48;
+const bars = [];
+for (let i = 0; i < BAR_COUNT; i++) {
+  const b = document.createElement('div');
+  b.className = 'viz-bar';
+  b.style.left       = (i * (100 / BAR_COUNT)) + '%';
+  b.style.height     = '2px';
+  b.style.background = `hsl(${150 + i * 4}, 100%, 60%)`;
+  vizEl.appendChild(b);
+  bars.push(b);
+}
+
+let vizFreq = 0, vizAnim = null, vizActive = false;
+
+function vizTrigger(freq) {
+  vizFreq = freq;
+  vizActive = true;
+  if (!vizAnim) animateViz();
+  setTimeout(() => { vizActive = false; }, 2300);
+}
+
+function animateViz() {
+  vizAnim = requestAnimationFrame(function loop() {
+    const t = Date.now() / 1000;
+    bars.forEach((b, i) => {
+      const wave = Math.sin(t * vizFreq / 55 + i * 0.38) * 0.5 + 0.5;
+      const h = vizActive ? (wave + Math.random() * 0.1) * 52 + 3 : Math.random() * 3 + 1;
+      b.style.height = h + 'px';
+    });
+    if (vizActive) {
+      vizAnim = requestAnimationFrame(loop);
+    } else {
+      bars.forEach(b => b.style.height = '2px');
+      vizAnim = null;
+    }
+  });
+}
+
+// ── SLIDERS ───────────────────────────────────────────────────
+document.getElementById('volumeSlider').addEventListener('input', e => {
+  volumeLevel = e.target.value / 100;
+  document.getElementById('volDisplay').textContent = e.target.value;
+  if (masterGain) masterGain.gain.value = volumeLevel;
+});
+
+document.getElementById('reverbSlider').addEventListener('input', e => {
+  reverbLevel = e.target.value / 100;
+  document.getElementById('revDisplay').textContent = e.target.value;
+  if (reverbGain) reverbGain.gain.value = reverbLevel;
+  if (dryGain)    dryGain.gain.value    = 1 - reverbLevel * 0.5;
+});
+
+// ── TIP ROTATION ──────────────────────────────────────────────
+setInterval(() => {
+  tipIndex = (tipIndex + 1) % INSTRUMENTS[currentInstrument].tips.length;
+  renderTip();
+}, 8000);
+
+// ── INIT ──────────────────────────────────────────────────────
+refresh();
+</script>
+</body>
+</html>
